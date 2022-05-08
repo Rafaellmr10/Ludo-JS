@@ -5,24 +5,26 @@ class Tokens extends Phaser.Physics.Arcade.Group {
 		this.scene = scene
 		this.scene.add.existing(this)
 		this.scene.physics.world.enable(this)
-
-		console.log(this)
 		
 	}
-	newToken (x, y, name, starPos, idxTexture){
-		let token = this.create(x, y, 'tokens', idxTexture).setScale(0.4).setInteractive()
+	newToken (x, y, name, startPos, idxTexture){
+		let token = this.create(x, y, 'tokens', idxTexture).setScale(0).setInteractive()
 
 		token.setName(name)
+		token.setDepth(1)
 
 		token.live = false 
-		token.pos = starPos
+		token.pos = startPos
 		token.steps = 0
-		token.finalSteps = 0
 		token.up = true
 		token.childs = []
+		token.inicialPos = startPos
 		token.inicialFrame = idxTexture
+		token.win = false
+
 		this.color = name
 
+		token.road = this.createRoad(startPos, name)
 		token.house = {x: x, y: y}
 
 		token.on('pointerdown', () => {
@@ -44,6 +46,24 @@ class Tokens extends Phaser.Physics.Arcade.Group {
             }else{
                 token.setFrame(token.inicialFrame)
             }
+		})
+
+		this.scene.tweens.timeline({
+			targets: token,
+			totalDuration: 1000,
+			ease: 'Power1',
+			tweens: [
+				{
+					scale: 0
+				},
+				{
+					scale: 0.5
+				},
+				{
+					scale: 0.4
+				}
+
+			]
 		})
 
 		token.standAnim = this.scene.tweens.timeline({
@@ -75,19 +95,38 @@ class Tokens extends Phaser.Physics.Arcade.Group {
         
 	}
 
-	update() {
-		console.log('aqui')
-		this.children.iterate((token) => {
-			
-		})
+	startGame(x, y, name, startPos, idxTexture) {
+
+		this.newToken(x, y, name, startPos, idxTexture)
+		this.newToken(x - 40, y + 40, name, startPos, idxTexture)
+		this.newToken(x + 40, y + 40, name, startPos, idxTexture)
+		this.newToken(x, y + 80, name, startPos, idxTexture)
 	}
 
-	startGame(x, y, name, starPos, idxTexture) {
+	createRoad(startPos, color){
 
-		this.newToken(x, y, name, starPos, idxTexture)
-		this.newToken(x - 40, y + 40, name, starPos, idxTexture)
-		this.newToken(x + 40, y + 40, name, starPos, idxTexture)
-		this.newToken(x, y + 80, name, starPos, idxTexture)
+		let board = this.scene.board.squares
+		let road = {}
+
+		let finalPos = 1
+		let pos = startPos
+
+		for (let i = 1; i <= 57; i++){
+
+			if (pos > 52) {pos = 1}
+
+			if (i < 52) {
+				road['s' + i] = board['s' + pos]
+			}else {
+				road['s' + i] = board[color]['s' + finalPos]
+				finalPos++
+			}
+
+			pos++
+
+		}
+		return road
+
 	}
 
 	canMove(stopAll) {
@@ -108,7 +147,7 @@ class Tokens extends Phaser.Physics.Arcade.Group {
 			this.children.iterate((token) => {
 
 				// Si la ficha esta viva, play!
-				if (token.live && token.finalSteps != 6) {
+				if (token.live && token.steps != 57) {
 
 					token.standAnim.play()
 					token.standAnim.resume()

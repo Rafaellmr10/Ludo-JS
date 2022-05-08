@@ -18,6 +18,7 @@ class Game extends Phaser.Scene {
     create() {
         this.board = new Board(this, 180, 0, 'board')
 
+
         this.backBtn = new Button(this, 90, this.game.config.height - 100)
         this.backBtn.setText('BACK')
         this.backBtn.setSceneObj('Menu')
@@ -28,7 +29,10 @@ class Game extends Phaser.Scene {
 
         this.createTeams()
 
-        this.everyTokens = []   
+        this.everyTokens = []  
+
+        // this.cam = this.cameras.add(0, 0, this.game.config.width, this.game.config.height, true, 'cam')
+        // this.cam.startFollow(this.green) 
 
         // El turno se elije de forma aleatoria
         this.setTurn(this.teams[Phaser.Math.Between(0, this.teams.length - 1)])   
@@ -53,28 +57,6 @@ class Game extends Phaser.Scene {
             })
         })
 
-        let securesTokens = []
-        this.everyTokens.map((token) => {
-
-            //Se verfica que fichas estan en la misma posicion y en posicion segura
-            this.everyTokens.map((token2) => {
-
-                if (token.pos == token2.pos && token.name != token2.name && this.isSecure(token) && this.isSecure(token2)) {
-
-                    if (!securesTokens.includes(token)) {
-                        securesTokens.push(token)
-                    }
-                    if (!securesTokens.includes(token2)) {
-                        securesTokens.push(token2)
-                    }
-                }
-            })
-
-        })
-
-        if (securesTokens.length > 1) {
-            this.orderTokens(securesTokens)
-        }
 
         this.teams.map((team) => { 
 
@@ -82,7 +64,7 @@ class Game extends Phaser.Scene {
             team.children.iterate((token) => {
 
                 //Se verifica cuantas fichas de x color han llegado a la meta, si son mas de 4 GANA!
-                if (token.finalSteps == 6) {
+                if (token.win) {
 
                     winers++
 
@@ -166,137 +148,43 @@ class Game extends Phaser.Scene {
             return team.turn
         })
 
-        let idx = this.teams.indexOf(current)
-        idx = (idx == this.teams.length - 1)? 0 : idx + 1
+        let idxNext = this.teams.indexOf(current)
+        idxNext = (idxNext == this.teams.length - 1)? 0 : idxNext + 1
 
-        return (next)? this.teams[idx] : current
+        return (next)? this.teams[idxNext] : current
 
     }
 
     checkTurn(token) {
 
         if(this[token.name].turn && this.dice.getData('rolled')) {
-            
 
             // Determina si el dado arrojo 1 o 6
-            let comodin = (this.dice.getData('value') == 6 || this.dice.getData('value') == 1)? true: false;
+            let comodin = (this.dice.getData('value') == 6 || this.dice.getData('value') == 1)
 
             if(token.live){
-
                 /*
-                    Si la posicion de la ficha es menor a 51 se establece la nueva posicion (posicion actual + valor del dado),
-                    Si no, sigue siendo null
+                    Si la posicion de la ficha es mayor a 52 a newPos se le resta 52, ya que solo hay 52 posiciones, 
+                    Si no, se establece la nueva posicion (posicion actual + valor del dado),
                  */
-                let newPos = token.pos? token.pos + this.dice.getData('value') : null
+                let newPos = token.pos + this.dice.getData('value')
                 newPos =  (newPos > 52)? newPos - 52: newPos
 
-                if (token.steps != null && token.steps + this.dice.getData('value') < 51) {
+                let newSteps = token.steps + this.dice.getData('value')
+                if (token.steps > 51) {newPos = null}
 
-                    this.move(token, this.board.squares['s' + newPos], newPos)
-                    token.steps += this.dice.getData('value')
-
-                }else {
-
-                    let finalSquares = this.board.squares[token.name]
-                    
-                    /*
-                        Si aun la ficha no entrado a la zona segura para ganar pero si
-                        el valor del dado posicionea la ficha en dicha zona entonces...
-                     */
-                    if(token.steps) {
-
-                        // Se mueve al casilla previa
-                        this.move(token, finalSquares.s0, null)
-                        token.finalSteps = (this.dice.getData('value')) - (50 - token.steps)
-
-                        // Se mueve a la casilla correspondiente a la posición final
-                        token.finalSteps = Math.abs(token.finalSteps)
-                        this.move(token, finalSquares['s' + token.finalSteps], null)
-                        token.steps = null
-
-                    }else if (token.finalSteps != 6) {
-
-
-                        /* Si la ficha va subiendo (token.up == true), entonces... */
-
-                        if(token.up) {
-
-                            let newFinalSteps = token.finalSteps + this.dice.getData('value')
-                            
-                            /* 
-                                Si la posicion final mayor a 6 entonces los pasos restantes
-                                se aplican a una nueva posición inicial y cambia el valor de token.up
-                            */
-                            if (newFinalSteps > 6) {
-
-                                // Se mueve a la casilla de ganar
-                                this.move(token, finalSquares.s6, null)
-                                token.up = false
-                                token.finalSteps = (this.dice.getData('value')) - (6 - token.finalSteps)
-
-                                // Se regresa a la posición correspondiente
-                                token.finalSteps = 6 - token.finalSteps
-                                this.move(token, finalSquares['s' + token.finalSteps], null)
-                            
-                            /* De lo contriario solo se mueve la ficha a dicha posisción final */
-                            }else {
-                                token.finalSteps = newFinalSteps
-                                this.move(token, finalSquares['s' + token.finalSteps], null)
-                            }
-
-                        }else {
-
-                        /* Si la ficha no va subiendo (token.up == false) entonces... */
-                            
-                            let newFinalSteps = token.finalSteps - this.dice.getData('value')
-
-                            /* 
-                                Si la posicion final menor a 1 entonces los pasos restantes
-                                se aplican a una nueva posicion inicial y cambia el valor de token.up
-                            */
-                            if (newFinalSteps < 1) {
-
-                                // Se mueve a la casilla 1 de la zona segura
-                                this.move(token, finalSquares['s' + 1], null)
-                                token.up = true
-                                token.finalSteps = (this.dice.getData('value')) - (token.finalSteps - 1)
-
-                                //Se mueve a la cassilla correspondiente
-                                token.finalSteps = (1 + token.finalSteps)
-                                this.move(token, finalSquares['s' + token.finalSteps], null)
-                                
-                            }
-
-                            /* De lo contriario solo se mueve la ficha a dicha posiscion final */
-                            else {
-                                token.finalSteps = newFinalSteps
-                                this.move(token, finalSquares['s' + token.finalSteps], null)
-                            }
-
-
-                            // Si la ficha esta en la meta pierde su interactividad ya que debe quedarse ahi
-                            if (token.finalSteps == 6) {
-                                token.setInteractive(false)
-                                this.setTurn(this[token.name])
-                            }
-
-                        }
-
-                        
-
-                    }
-                }
+                this.move(token, token.road['s' + newSteps], newPos)
 
                 if (!comodin) {
-
+                    //Cambio de turno al siguiente
                     let next = this.getTurn(true)
-                    this.setTurn(next)//Cambio de turno al siguiente
-
+                    this.setTurn(next)
                 }
 
             }else if(comodin) {
+                this.move(token, token.road.s1, token.pos)
                 token.live = true
-                this.move(token, this.board.squares['s' + token.pos], token.pos)
+                token.steps++
             }
         }
     }
@@ -313,33 +201,30 @@ class Game extends Phaser.Scene {
         if(token.name == target.name && token.pos == target.pos){
             
             //Montar
-            if (token.live && target.live && (this[token.name].clicked || this[target.name].clicked)) {
-                token.childs.push(target)
-                if (target.childs.length >= 1) {
-                    for (let i in target.childs) {
-                        token.childs.push(target.childs[i])
+            if (token.live && target.live && this[token.name].clicked) {
+
+                target.childs.push(token)
+                if (token.childs.length >= 1) {
+                    for (let i in token.childs) {
+                        target.childs.push(token.childs[i])
                     }
                 }
-                target.live = false
-                target.destroy(true) 
+
+                token.live = false
+                Phaser.Utils.Array.Remove(this.everyTokens, token)
+                token.destroy(true) 
 
                 this.setTurn(this[token.name])
-
             }
-
-            
         }else if (token.pos == target.pos){
 
             //Matar a otra(s) ficha(s)
-
-            if ((this[token.name].clicked) && (!this.isSecure(target) || token.steps == 0)) {
+            if ((this[token.name].clicked) && (!this.isSecure(target) || token.steps == 1)) {
                 //Se repite el turno
                 this.setTurn(this[token.name])   
 
                 this.killToken(target)
-
-            }           
-
+            }        
         }     
     }
 
@@ -355,13 +240,16 @@ class Game extends Phaser.Scene {
     }
 
     killToken(token){
+        // Se crean nuevas fichas remplazando la capturada con sus hijos
         if (token.childs.length >= 1) {
             for (let i in token.childs){
-            this[token.name].newToken(token.childs[i].house.x, token.childs[i].house.y)
+                let t = token.childs[i]
+                this[token.name].newToken(t.house.x, t.house.y, t.name, t.inicialPos, t.inicialFrame)
             }
         }
-        this[token.name].newToken(token.house.x, token.house.y)
-            
+        this[token.name].newToken(token.house.x, token.house.y, token.name, token.inicialPos, token.inicialFrame)
+        
+        //Se elimina por completo la ficha capturada    
         token.live = false 
         Phaser.Utils.Array.Remove(this.everyTokens, token)
         token.destroy(true)
@@ -369,55 +257,155 @@ class Game extends Phaser.Scene {
 
     move(token, square, newPos) {
 
-        token.x = square.x
-        token.y = square.y
-        token.pos = newPos
-        this.dice.setData('rolled', false)
+        let tweens = []
+        if (!token.live){
+            tweens = [{
+                duration: 500,
+                ease: 'power1',
+                x: square.x,
+                y: square.y
+            }]
+        }else {
 
-        this[token.name].canMove(true)
+            let steps = this.dice.getData('value')
+            for (let i = 1; i <= steps; i++) {
+
+                if (token.steps + 1 > 57) {
+                    token.up = false
+                }
+                if (token.steps - 1 < 52){
+                    token.up = true
+                }
+
+                if (token.up) {
+                    token.steps++
+                    tweens.push({
+                        duration: 500,
+                        ease: 'power1',
+                        x: token.road['s'+ (token.steps)].x,
+                        y: token.road['s'+ (token.steps)].y 
+                    })
+                }else {
+                    token.steps--
+                    tweens.push({
+                        duration: 500,
+                        ease: 'power1',
+                        x: token.road['s'+ (token.steps)].x,
+                        y: token.road['s'+ (token.steps)].y
+                    })
+                }
+                
+            }
+            
+        }
+        
+
+        let timeline = this.tweens.timeline({
+            targets: token,
+            ease: 'Power1',
+            tweens: tweens,
+            onStart: () => {
+                token.disableInteractive()
+            },
+            onComplete: () => {
+                token.pos = newPos
+
+                if(token.live) {token.setInteractive()}
+
+                this.dice.setData('rolled', false)
+
+                this[token.name].canMove(true)
+
+                this.checkOrder()
+                
+                // Si la ficha esta en la meta pierde su interactividad ya que debe quedarse ahi
+                if (token.steps == 57) {
+                    token.win = true
+                    token.disableInteractive()
+                    this.setTurn(this[token.name])
+                }
+            }
+        }) 
     }
 
+
+    checkOrder(){
+        let securesTokens = []
+        this.everyTokens.map((token) => {
+
+            //Se verfica que fichas estan en la misma posicion y en posicion segura
+            this.everyTokens.map((token2) => {
+
+                if (token.pos == token2.pos && token.name != token2.name && this.isSecure(token) && this.isSecure(token2)) {
+
+                    if (!securesTokens.includes(token)) {
+                        securesTokens.push(token)
+                    }
+                    if (!securesTokens.includes(token2)) {
+                        securesTokens.push(token2)
+                    }
+                }
+            })
+
+            if (!this.isSecure(token)) {
+                this.orderTokens(null)
+            }
+
+        })
+
+        if (securesTokens.length > 1) {
+            this.orderTokens(securesTokens)
+        }else{
+            this.orderTokens(null)
+        }
+    }
+
+    // Ordenar fichas reduciendo el tamaño (tokens != null) o las vuelve al la normalidad (tokens == null)
     orderTokens(tokens){
+
+        if (tokens == null) {
+            this.everyTokens.map((token) => {
+
+                if (token.live) {
+                    token.setScale(0.4)
+                    token.x = token.road['s'+token.steps].x
+                    token.y = token.road['s'+token.steps].y
+                }
+
+            })
+            return
+        }
+
         let loop1 = true
         let loop2 = true
         let loop3 = true
         let loop4 = true
-        
-        this.everyTokens.map((token) => {
-
-            if (token.live) {
-                token.setScale(0.4)
-                token.x = this.board.squares['s'+token.pos].x
-                token.y = this.board.squares['s'+token.pos].y
-            }
-
-        })
 
         for (let i in tokens){
 
             tokens[i].setScale(0.2)
 
             if (loop1) {
-                tokens[i].x = this.board.squares['s'+tokens[i].pos].x - 10
-                tokens[i].y = this.board.squares['s'+tokens[i].pos].y - 10
+                tokens[i].x = tokens[i].road['s'+tokens[i].steps].x - 10
+                tokens[i].y = tokens[i].road['s'+tokens[i].steps].y - 10
                 loop1 = false
                 continue
             }
             if (loop2) {
-                tokens[i].x = this.board.squares['s'+tokens[i].pos].x + 10
-                tokens[i].y = this.board.squares['s'+tokens[i].pos].y + 10
+                tokens[i].x = tokens[i].road['s'+tokens[i].steps].x + 10
+                tokens[i].y = tokens[i].road['s'+tokens[i].steps].y + 10
                 loop2 = false
                 continue
             }
             if (loop3) {
-                tokens[i].x = this.board.squares['s'+tokens[i].pos].x + 10
-                tokens[i].y = this.board.squares['s'+tokens[i].pos].y - 10
+                tokens[i].x = tokens[i].road['s'+tokens[i].steps].x + 10
+                tokens[i].y = tokens[i].road['s'+tokens[i].steps].y - 10
                 loop3 = false
                 continue
             }
             if (loop4) {
-                tokens[i].x = this.board.squares['s'+tokens[i].pos].x - 10
-                tokens[i].y = this.board.squares['s'+tokens[i].pos].y + 10
+                tokens[i].x = tokens[i].road['s'+tokens[i].steps].x - 10
+                tokens[i].y = tokens[i].road['s'+tokens[i].steps].y + 10
                 loop4 = false
                 continue
             }
