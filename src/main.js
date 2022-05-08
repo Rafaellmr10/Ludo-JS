@@ -5,7 +5,7 @@ import Bootloader from './Bootloader.js';
 
 const config = {
     title: "Ludo",
-    version: "1.0.0", // Game finished! :D
+    version: "1.1.0", // Move Animation finished! :D
     type: Phaser.CANVAS,
     scale: {
         parent: "phaser_container",

@@ -15,7 +15,7 @@ class Bootloader extends Phaser.Scene {
                 .image('yellow')
                 .image('logo')
                 .image('button')
-                .spritesheet('dice', 'dice.png' ,{frameWidth: 201, frameHeight: 208})
+                .spritesheet('dice', 'dice.png' ,{frameWidth: 201.5, frameHeight: 208})
                 .spritesheet('tokens', 'tokens.png' ,{frameWidth: 99, frameHeight: 100})
 
         this.load.audio('rollSound', '../sound/roll.wav')

@@ -18,7 +18,7 @@ class Dice extends Phaser.GameObjects.Sprite {
 			if(!this.data.get('rolled')) {
 				this.anims.play('rollDice')
 				this.scene.diceSound.play()
-				this.setData('value', Number(prompt()))//Phaser.Math.Between(1, 6))
+				this.setData('value', Phaser.Math.Between(1, 6))
 				this.setData('rolled', true)
 			}
 		})
