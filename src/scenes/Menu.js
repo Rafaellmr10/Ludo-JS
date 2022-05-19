@@ -1,5 +1,6 @@
 import Button from '../GameObjects/button.js'
 import SecondaryButton from '../GameObjects/secondaryButton.js'
+import FullscreenButton from '../GameObjects/fullscreenButton.js'
 
 class Menu extends Phaser.Scene {
     constructor() {
@@ -27,6 +28,9 @@ class Menu extends Phaser.Scene {
 
         // Logo
         this.add.image(centerX, centerY - 200, 'logo').setScale(0.7)
+
+        // Fullscreen Button
+        new FullscreenButton(this, (centerX * 2) - 50, 40)
 
         // Select Players Numbers
         this.selectPlayersBtn = [
@@ -117,7 +121,8 @@ class Menu extends Phaser.Scene {
 
         let names = document.querySelectorAll('input')
         let colors = this.selectColorBtns
-        
+
+
         for (let i = 0; i < names.length; i++){
             this.data.values.players[i] = {
                 name: (names[i].value)? names[i].value : 'The ' + colors[i].texture.key + 's',

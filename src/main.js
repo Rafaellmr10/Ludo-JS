@@ -5,7 +5,7 @@ import Bootloader from './Bootloader.js';
 
 const config = {
     title: "Ludo",
-    version: "1.1.0", // Move Animation finished! :D
+    version: "1.2.0", // Fullscreen Toggle Button Added :D
     type: Phaser.CANVAS,
     scale: {
         parent: "phaser_container",
@@ -14,7 +14,7 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    backgroundColor: "#001100",
+    backgroundColor: "#999",
     pixelArt: false,
     physics: {
         default: "arcade",
@@ -25,13 +25,14 @@ const config = {
         }
     },
     banner: {
-        hidePhaser: true,
+        hidePhaser: false,
         text: '#000',
         background: ['lightgreen', 'blue', 'red', 'yellow']
     },
     dom: {
         createContainer: true
     },
+    fullscreenTarget: "phaser_container",
     scene: [Bootloader, Menu, Game, GameOver]
 };
 

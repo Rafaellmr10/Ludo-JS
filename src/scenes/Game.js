@@ -2,6 +2,7 @@ import Tokens from '../GameObjects/tokens.js'
 import Dice from '../GameObjects/dice.js'
 import Board from '../GameObjects/board.js'
 import Button from '../GameObjects/button.js'
+import FullscreenButton from '../GameObjects/fullscreenButton.js'
 
 class Game extends Phaser.Scene {
     constructor() {
@@ -18,21 +19,19 @@ class Game extends Phaser.Scene {
     create() {
         this.board = new Board(this, 180, 0, 'board')
 
-
-        this.backBtn = new Button(this, 90, this.game.config.height - 100)
+        this.backBtn = new Button(this, 90, this.game.config.height - 150)
         this.backBtn.setText('BACK')
         this.backBtn.setSceneObj('Menu')
         this.backBtn.tween.pause()
+
+        new FullscreenButton(this, 90, this.game.config.height - 50)
 
         this.dice = new Dice(this, 90, 90, 'dice', Phaser.Math.Between(32, 37))
         this.diceSound = this.sound.add('rollSound', {loop: true})
 
         this.createTeams()
 
-        this.everyTokens = []  
-
-        // this.cam = this.cameras.add(0, 0, this.game.config.width, this.game.config.height, true, 'cam')
-        // this.cam.startFollow(this.green) 
+        this.everyTokens = [] 
 
         // El turno se elije de forma aleatoria
         this.setTurn(this.teams[Phaser.Math.Between(0, this.teams.length - 1)])   
