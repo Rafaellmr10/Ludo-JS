@@ -5,7 +5,7 @@ import Bootloader from './Bootloader.js';
 
 const config = {
     title: "Ludo",
-    version: "1.2.0", // Fullscreen Toggle Button Added :D
+    version: "1.3.0", // Zoom On/Off Button Added! ;D
     type: Phaser.CANVAS,
     scale: {
         parent: "phaser_container",
