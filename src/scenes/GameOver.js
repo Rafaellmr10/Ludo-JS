@@ -23,7 +23,7 @@ class GameOver extends Phaser.Scene {
 
         this.add.text(centerX, centerY, this.winner.name.toUpperCase() + ', WINS!!',{
             fontSize: 50,
-            fontFamily: '"C omic Sans MS"',
+            fontFamily: '"Comic Sans MS"',
             color: 'black',
             backgroundColor: this.winner.color
         }).setOrigin(0.5)

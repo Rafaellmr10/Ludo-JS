@@ -18,11 +18,31 @@ class Game extends Phaser.Scene {
 
     create() {
         this.board = new Board(this, 180, 0, 'board')
+        this.zoom = true
 
         this.backBtn = new Button(this, 90, this.game.config.height - 150)
         this.backBtn.setText('BACK')
         this.backBtn.setSceneObj('Menu')
         this.backBtn.tween.pause()
+
+        // Boton para actvar o desactivar el zoom, 
+        // cuando esta activado se inicia al mover una ficha
+        this.zoomBtn = new Button(this, 90, this.game.config.height - 300)
+        this.zoomBtn.setText('Zoom: On')
+        this.zoomBtn.tween.pause()
+        this.zoomBtn.setColor('green')
+        this.zoomBtn.on('pointerdown', () => {
+            this.zoom = !this.zoom
+
+            if(!this.zoom) {
+                this.zoomBtn.setText('Zoom: Off')
+                this.zoomBtn.setColor('red')
+            }else {
+                this.zoomBtn.setText('Zoom: On')
+                this.zoomBtn.setColor('green')
+            }
+        })
+
 
         new FullscreenButton(this, 90, this.game.config.height - 50)
 
@@ -30,8 +50,7 @@ class Game extends Phaser.Scene {
         this.diceSound = this.sound.add('rollSound', {loop: true})
 
         this.createTeams()
-
-        this.everyTokens = [] 
+        this.everyTokens = []
 
         // El turno se elije de forma aleatoria
         this.setTurn(this.teams[Phaser.Math.Between(0, this.teams.length - 1)])   
@@ -259,7 +278,7 @@ class Game extends Phaser.Scene {
         let tweens = []
         if (!token.live){
             tweens = [{
-                duration: 500,
+                duration: 1500,
                 ease: 'power1',
                 x: square.x,
                 y: square.y
@@ -297,7 +316,6 @@ class Game extends Phaser.Scene {
             }
             
         }
-        
 
         let timeline = this.tweens.timeline({
             targets: token,
@@ -305,9 +323,18 @@ class Game extends Phaser.Scene {
             tweens: tweens,
             onStart: () => {
                 token.disableInteractive()
+
+                if(this.zoom){
+                    this.cameras.main.zoomTo(2, 500)
+                    this.cameras.main.startFollow(token)
+                }
             },
             onComplete: () => {
                 token.pos = newPos
+
+                this.cameras.main.zoomTo(1)
+                this.cameras.main.stopFollow()
+                this.cameras.main.pan(this.game.config.width/2, this.game.config.height/2)
 
                 if(token.live) {token.setInteractive()}
 
@@ -359,7 +386,8 @@ class Game extends Phaser.Scene {
         }
     }
 
-    // Ordenar fichas reduciendo el tamaño (tokens != null) o las vuelve al la normalidad (tokens == null)
+    // Ordenar fichas si estan en una misma casilla reduciendo el tamaño (tokens != null)
+    //  o las vuelve al la normalidad si no lo estan (tokens == null)
     orderTokens(tokens){
 
         if (tokens == null) {
